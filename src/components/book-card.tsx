@@ -7,6 +7,7 @@ export interface Book {
   author: string;
   category: string;
   image: string;
+  description?: string;
   totalCopies: number;
 }
 
