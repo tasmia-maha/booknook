@@ -1,4 +1,4 @@
-import Image from "next/image";
+"use client"
 import Link from "next/link";
 
 export interface Book {
@@ -19,13 +19,12 @@ export default function BookCard({ book }: { book: Book }) {
       {/* cover */}
       <div className="relative h-56 w-full bg-[#F0EFE9]">
         {book.image ? (
-          <Image
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
             src={book.image}
             alt={book.title}
-            fill
-            unoptimized
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="object-cover"
+            loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover"
           />
         ) : (
           <div className="flex h-full items-center justify-center text-sm text-gray-400">
