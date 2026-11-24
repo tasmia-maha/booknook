@@ -59,7 +59,10 @@ export default function MyBorrows() {
 
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/borrows?email=${encodeURIComponent(userEmail)}`
+      `${process.env.NEXT_PUBLIC_API_URL}/borrows`,
+      {
+        credentials: "include",
+      }
     );
 
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -131,7 +134,10 @@ export default function MyBorrows() {
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/borrows/${returnTarget._id}`,
-        { method: "DELETE" }
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
       );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       toast.success(

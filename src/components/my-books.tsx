@@ -4,9 +4,7 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
-
-// TODO: auth phase e ei placeholder BetterAuth session er email diye replace hobe
-const CURRENT_USER_EMAIL = "test@example.com";
+import { useAuth } from "@/context/AuthContext";
 
 const EDIT_CATEGORIES = ["Fiction", "Science", "History", "Kids", "Others"];
 
@@ -46,6 +44,7 @@ interface EditForm {
 type SortOrder = "newest" | "oldest";
 
 export default function MyBooks() {
+  const { user, loading: authLoading } = useAuth();
   const [books, setBooks] = useState<MyBook[]>([]);
   const [borrows, setBorrows] = useState<BorrowRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,19 +61,37 @@ export default function MyBooks() {
   const [deletingInProgress, setDeletingInProgress] = useState(false);
 
   const loadData = useCallback(async () => {
+    if (authLoading) return;
+
+    if (!user) {
+      setBooks([]);
+      setBorrows([]);
+      setLoading(false);
+      return;
+    }
+
     try {
       const [booksRes, borrowsRes] = await Promise.all([
         fetch(`${process.env.NEXT_PUBLIC_API_URL}/books`),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/borrows`),
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/borrows`, {
+          credentials: "include",
+        }),
       ]);
+
       if (!booksRes.ok) throw new Error(`HTTP ${booksRes.status}`);
+      if (!borrowsRes.ok) throw new Error(`HTTP ${borrowsRes.status}`);
+
       const allBooks = await booksRes.json();
-      const allBorrows = borrowsRes.ok ? await borrowsRes.json() : [];
+      const allBorrows = await borrowsRes.json();
 
       const list: MyBook[] = Array.isArray(allBooks) ? allBooks : [];
+
       setBooks(
-        list.filter((b) => (b.addedByEmail || "").toLowerCase() === CURRENT_USER_EMAIL)
+        list.filter(
+          (b) => (b.addedByEmail || "").toLowerCase() === user.email.toLowerCase()
+        )
       );
+
       setBorrows(Array.isArray(allBorrows) ? allBorrows : []);
       setError(false);
     } catch (err) {
@@ -83,7 +100,7 @@ export default function MyBooks() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user, authLoading]);
 
   useEffect(() => {
     loadData();
@@ -145,6 +162,7 @@ export default function MyBooks() {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/books/${editing._id}`, {
         method: "PATCH",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: editForm.title.trim(),
@@ -174,6 +192,7 @@ export default function MyBooks() {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/books/${deleting._id}`, {
         method: "DELETE",
+        credentials: "include",
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) throw new Error(data?.message || "Failed to delete book");

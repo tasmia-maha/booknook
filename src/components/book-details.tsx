@@ -30,9 +30,9 @@ function InfoCard({ label, value }: { label: string; value: string | number }) {
 
 export default function BookDetails() {
   const [userEmail, setUserEmail] = useState("");
-const [borrowOpen, setBorrowOpen] = useState(false);
-const [borrowing, setBorrowing] = useState(false);
-const [borrowError, setBorrowError] = useState("");
+  const [borrowOpen, setBorrowOpen] = useState(false);
+  const [borrowing, setBorrowing] = useState(false);
+  const [borrowError, setBorrowError] = useState("");
   const { id } = useParams<{ id: string }>();
   const [book, setBook] = useState<Book | null>(null);
   const [books, setBooks] = useState<Book[]>([]);
@@ -90,11 +90,11 @@ const [borrowError, setBorrowError] = useState("");
       `${process.env.NEXT_PUBLIC_API_URL}/borrows`,
       {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email: userEmail,
           bookId: book?._id,
         }),
       }

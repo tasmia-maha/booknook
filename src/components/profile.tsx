@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-
 import { useAuth } from "@/context/AuthContext";
 import type { Book } from "./book-card";
 
@@ -48,12 +47,16 @@ export default function Profile() {
       const [booksRes, borrowsRes] = await Promise.all([
         fetch(`${process.env.NEXT_PUBLIC_API_URL}/books`),
         fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/borrows?email=${encodeURIComponent(userEmail)}`
+          `${process.env.NEXT_PUBLIC_API_URL}/borrows`,
+          {
+            credentials: "include",
+          }
         ),
       ]);
       if (!booksRes.ok) throw new Error(`HTTP ${booksRes.status}`);
       const books = await booksRes.json();
-      const borrows = borrowsRes.ok ? await borrowsRes.json() : [];
+      if (!borrowsRes.ok) throw new Error(`HTTP ${borrowsRes.status}`);
+      const borrows = await borrowsRes.json();
 
       const list: Book[] = Array.isArray(books) ? books : [];
       setBooksAdded(

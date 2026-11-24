@@ -20,8 +20,6 @@ interface FormState {
   category: string;
   description: string;
   totalCopies: string;
-  addedByName: string;
-  addedByEmail: string;
 }
 
 const emptyForm: FormState = {
@@ -30,8 +28,6 @@ const emptyForm: FormState = {
   category: "",
   description: "",
   totalCopies: "1",
-  addedByName: "",
-  addedByEmail: "",
 };
 
 type InputElement = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
@@ -68,32 +64,38 @@ export default function AddBook() {
     uploadImage(file);
   }
 
-  async function uploadImage(file: File) {
-    const apiKey = process.env.NEXT_PUBLIC_IMGBB_API_KEY;
-    if (!apiKey) {
-      toast.error("Image upload key missing (NEXT_PUBLIC_IMGBB_API_KEY in .env.local)");
-      return;
-    }
-    setUploading(true);
-    try {
-      const fd = new FormData();
-      fd.append("image", file);
-      const res = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+async function uploadImage(file: File) {
+  setUploading(true);
+
+  try {
+    const fd = new FormData();
+    fd.append("image", file);
+
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/upload`,
+      {
         method: "POST",
+        credentials: "include",
         body: fd,
-      });
-      const data = await res.json();
-      if (!data?.success) throw new Error(data?.error?.message || "Upload failed");
-      setImageUrl(data.data.url);
-      toast.success("Cover image uploaded!");
-    } catch (err) {
-      console.error("Image upload failed:", err);
-      removeImage();
-      toast.error("Image upload failed. Please try again.");
-    } finally {
-      setUploading(false);
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.message || "Upload failed");
     }
+
+    setImageUrl(data.imageUrl);
+    toast.success("Cover image uploaded!");
+  } catch (err) {
+    console.error("Image upload failed:", err);
+    removeImage();
+    toast.error("Image upload failed. Please try again.");
+  } finally {
+    setUploading(false);
   }
+}
 
   function removeImage() {
     if (imagePreview) URL.revokeObjectURL(imagePreview);
@@ -134,6 +136,7 @@ export default function AddBook() {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/books`, {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: form.title.trim(),
@@ -142,8 +145,6 @@ export default function AddBook() {
           description: form.description.trim(),
           totalCopies: copies,
           image: imageUrl,
-          addedByName: form.addedByName.trim() || "Anonymous",
-          addedByEmail: form.addedByEmail.trim(),
         }),
       });
       const data = await res.json().catch(() => null);
@@ -287,23 +288,6 @@ export default function AddBook() {
               </div>
             </div>
             <p className="mt-3 text-xs text-gray-500">All copies are initially available for borrowing.</p>
-          </section>
-
-          {/* Section D — Contributor */}
-          <section className="rounded-3xl border border-[#E8E6DE] bg-white p-6 md:p-8">
-            <h3 className="text-lg font-bold text-[#17382B]">Contributor Information</h3>
-            {/* TODO: auth banano hole ei duita field logged-in user theke
-                auto-populate hobe ar readOnly kore dibo */}
-            <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className={labelClass}>Contributor Name</label>
-                <input className={inputClass} value={form.addedByName} onChange={update("addedByName")} placeholder="Your name" />
-              </div>
-              <div>
-                <label className={labelClass}>Contributor Email</label>
-                <input type="email" className={inputClass} value={form.addedByEmail} onChange={update("addedByEmail")} placeholder="you@example.com" />
-              </div>
-            </div>
           </section>
 
           {/* Section E — Submit */}
