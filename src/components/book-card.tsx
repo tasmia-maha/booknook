@@ -9,6 +9,12 @@ export interface Book {
   image: string;
   description?: string;
   totalCopies: number;
+  publicationYear?: number;
+  language?: string;
+  publisher?: string;
+  addedByName?: string;
+  addedByEmail?: string;
+  createdAt?: string;
 }
 
 export default function BookCard({ book }: { book: Book }) {
