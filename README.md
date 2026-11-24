@@ -27,7 +27,7 @@ The platform provides a simple and user-friendly experience for managing books a
 
 ---
 
-## 🛠️ Technologies Used
+##  Technologies Used
 
 ### Frontend
 - Next.js (App Router)
