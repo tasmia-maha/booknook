@@ -1,21 +1,11 @@
+
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 import React, { useState, useRef, useEffect } from "react";
 import { User, LogOut, Menu, X } from "lucide-react";
-
-interface UserType {
-  name: string;
-  email: string;
-  photoURL: string;
-}
-
-interface NavbarProps {
-  user?: UserType | null;
-  onLogout?: () => void;
-}
 
 // Logo
 const BookNookLogo: React.FC = () => (
@@ -51,18 +41,43 @@ const BookNookLogo: React.FC = () => (
         fill="#17382B"
       />
     </svg>
+
     <span className="font-serif text-[28px] sm:text-[30px] font-bold tracking-tight text-[#17382B] leading-none inline-flex items-baseline">
       BookNook
     </span>
   </div>
 );
 
-const Navbar: React.FC<NavbarProps> = ({ user = null, onLogout = () => {} }) => {
+const Navbar: React.FC = () => {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const { user, loading, logout } = useAuth();
+
+  // Generate user initials
+  const userInitials =
+    user?.name
+      ?.trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part[0])
+      .join("")
+      .toUpperCase() || "U";
+
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Logout handler
+  const handleLogout = async () => {
+    await logout();
+    setIsDropdownOpen(false);
+    setIsMobileMenuOpen(false);
+    router.push("/");
+  };
+
+  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -72,8 +87,12 @@ const Navbar: React.FC<NavbarProps> = ({ user = null, onLogout = () => {} }) => 
         setIsDropdownOpen(false);
       }
     };
+
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
   const navLinks = [
@@ -84,13 +103,16 @@ const Navbar: React.FC<NavbarProps> = ({ user = null, onLogout = () => {} }) => 
     { name: "My Borrows", path: "/my-borrows", isPrivate: true },
   ];
 
-  const visibleLinks = navLinks.filter((link) => !link.isPrivate || Boolean(user));
+  const visibleLinks = navLinks.filter(
+    (link) => !link.isPrivate || Boolean(user)
+  );
 
   return (
     <header className="sticky top-0 z-50 w-full bg-[#F5F6F1]/95 backdrop-blur-sm border-b border-[#E5E3DC]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
-          {/* left side */}
+
+          {/* Left side */}
           <div className="flex items-center gap-10">
             <Link
               href="/"
@@ -104,6 +126,7 @@ const Navbar: React.FC<NavbarProps> = ({ user = null, onLogout = () => {} }) => 
             <nav className="hidden md:flex items-center gap-7">
               {visibleLinks.map((link) => {
                 const isActive = pathname === link.path;
+
                 return (
                   <Link
                     key={link.path}
@@ -115,6 +138,7 @@ const Navbar: React.FC<NavbarProps> = ({ user = null, onLogout = () => {} }) => 
                     }`}
                   >
                     {link.name}
+
                     {isActive && (
                       <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#C47451] rounded-full" />
                     )}
@@ -124,9 +148,9 @@ const Navbar: React.FC<NavbarProps> = ({ user = null, onLogout = () => {} }) => 
             </nav>
           </div>
 
-          {/* right side */}
+          {/* Right side - Desktop */}
           <div className="hidden md:flex items-center gap-4">
-            {!user ? (
+            {loading ? null : !user ? (
               <>
                 <Link
                   href="/login"
@@ -134,6 +158,7 @@ const Navbar: React.FC<NavbarProps> = ({ user = null, onLogout = () => {} }) => 
                 >
                   Login
                 </Link>
+
                 <Link
                   href="/register"
                   className="text-sm font-medium bg-[#17382B] hover:bg-[#0E2B1F] text-white px-5 py-2.5 rounded-md transition-colors shadow-sm"
@@ -148,18 +173,9 @@ const Navbar: React.FC<NavbarProps> = ({ user = null, onLogout = () => {} }) => 
                   className="flex items-center gap-2 focus:outline-none rounded-full p-0.5 border-2 border-transparent hover:border-[#C47451] transition-all"
                   title={user.name}
                 >
-                  <Image
-                    src={
-                      user.photoURL ||
-                      "https://ui-avatars.com/api/?name=" +
-                        encodeURIComponent(user.name) +
-                        "&background=17382B&color=fff"
-                    }
-                    alt={user.name}
-                    width={40}
-                    height={40}
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
+                  <div className="w-10 h-10 rounded-full bg-[#17382B] text-white flex items-center justify-center text-sm font-medium">
+                    {userInitials}
+                  </div>
                 </button>
 
                 {isDropdownOpen && (
@@ -168,6 +184,7 @@ const Navbar: React.FC<NavbarProps> = ({ user = null, onLogout = () => {} }) => 
                       <p className="text-sm font-semibold text-[#17382B] truncate">
                         {user.name}
                       </p>
+
                       <p className="text-xs text-[#6E7771] truncate">
                         {user.email}
                       </p>
@@ -175,7 +192,7 @@ const Navbar: React.FC<NavbarProps> = ({ user = null, onLogout = () => {} }) => 
 
                     <div className="py-1">
                       <Link
-                        href="/my-profile"
+                        href="/profile"
                         onClick={() => setIsDropdownOpen(false)}
                         className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-[#3E4742] hover:bg-[#F5F6F1] hover:text-[#17382B] transition-colors"
                       >
@@ -184,10 +201,7 @@ const Navbar: React.FC<NavbarProps> = ({ user = null, onLogout = () => {} }) => 
                       </Link>
 
                       <button
-                        onClick={() => {
-                          setIsDropdownOpen(false);
-                          onLogout();
-                        }}
+                        onClick={handleLogout}
                         className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-[#C47451] hover:bg-[#FDF6F4] transition-colors"
                       >
                         <LogOut className="w-4 h-4" />
@@ -205,6 +219,7 @@ const Navbar: React.FC<NavbarProps> = ({ user = null, onLogout = () => {} }) => 
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="p-2 rounded-md text-[#17382B] hover:bg-[#E5E3DC]/50 focus:outline-none"
+              aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
             >
               {isMobileMenuOpen ? (
                 <X className="w-6 h-6" />
@@ -235,7 +250,7 @@ const Navbar: React.FC<NavbarProps> = ({ user = null, onLogout = () => {} }) => 
           ))}
 
           <div className="pt-4 border-t border-[#E5E3DC]">
-            {!user ? (
+            {loading ? null : !user ? (
               <div className="flex flex-col gap-2">
                 <Link
                   href="/login"
@@ -244,6 +259,7 @@ const Navbar: React.FC<NavbarProps> = ({ user = null, onLogout = () => {} }) => 
                 >
                   Login
                 </Link>
+
                 <Link
                   href="/register"
                   onClick={() => setIsMobileMenuOpen(false)}
@@ -253,44 +269,42 @@ const Navbar: React.FC<NavbarProps> = ({ user = null, onLogout = () => {} }) => 
                 </Link>
               </div>
             ) : (
-              <div className="space-y-2">
-                <div className="flex items-center gap-3 px-3 py-2">
-                  <Image
-                    src={
-                      user.photoURL ||
-                      "https://ui-avatars.com/api/?name=" +
-                        encodeURIComponent(user.name) +
-                        "&background=17382B&color=fff"
-                    }
-                    alt={user.name}
-                    width={40}
-                    height={40}
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
-                  <div>
-                    <p className="text-sm font-semibold text-[#17382B]">
-                      {user.name}
-                    </p>
-                    <p className="text-xs text-[#6E7771]">{user.email}</p>
+              <>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3 px-3 py-2">
+                    <div className="w-10 h-10 rounded-full bg-[#17382B] text-white flex items-center justify-center text-sm font-medium shrink-0">
+                      {userInitials}
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-semibold text-[#17382B]">
+                        {user.name}
+                      </p>
+
+                      <p className="text-xs text-[#6E7771]">
+                        {user.email}
+                      </p>
+                    </div>
                   </div>
+
+                  <Link
+                    href="/profile"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#3E4742] hover:bg-[#E5E3DC]/40 rounded-md"
+                  >
+                    <User className="w-4 h-4" />
+                    My Profile
+                  </Link>
                 </div>
-                <Link
-                  href="/my-profile"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#3E4742] hover:bg-[#E5E3DC]/40 rounded-md"
-                >
-                  <User className="w-4 h-4" /> My Profile
-                </Link>
+
                 <button
-                  onClick={() => {
-                    onLogout();
-                    setIsMobileMenuOpen(false);
-                  }}
+                  onClick={handleLogout}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#C47451] hover:bg-[#FDF6F4] rounded-md"
                 >
-                  <LogOut className="w-4 h-4" /> Logout
+                  <LogOut className="w-4 h-4" />
+                  Logout
                 </button>
-              </div>
+              </>
             )}
           </div>
         </div>
