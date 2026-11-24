@@ -128,3 +128,21 @@
     @apply font-sans;
   }
 }
+
+@keyframes bookFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-14px);
+  }
+}
+
+.animate-book-float {
+  animation: bookFloat 4s ease-in-out infinite;
+}
+body:has(.not-found-page) .site-footer {
+  display: none !important;
+}
