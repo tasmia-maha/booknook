@@ -26,16 +26,19 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} bg-[#F7F6F2]`}
-      >
-        <AuthProvider>
-          <LayoutWrapper>{children}
-            <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
-          </LayoutWrapper>
-        </AuthProvider>
-      </body>
-    </html>
-  );
+  <html lang="en">
+    <body
+      className={`${geistSans.variable} ${geistMono.variable} bg-[#F7F6F2]`}
+    >
+      <AuthProvider>
+        <LayoutWrapper>{children}</LayoutWrapper>
+
+        <Toaster
+          position="top-right"
+          toastOptions={{ duration: 3000 }}
+        />
+      </AuthProvider>
+    </body>
+  </html>
+);
 }
